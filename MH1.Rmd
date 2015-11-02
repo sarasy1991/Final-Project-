@@ -1,0 +1,46 @@
+---
+title: "Metropolis- Hastling"
+author: "Mandy"
+date: "2015.11.2"
+output: html_document
+---
+```{r}
+set.seed(730)
+mh.beta <- function(c,n.sims) {
+  x.update <- function(x.cur,c) {
+    # choosing candidate
+    x.can <- rbeta(1, c*pbeta(x.cur,6,4), c*(1-pbeta(x.cur,6,4)))
+    # likelihood(Whether I should use d or p)
+    a1 <- dbeta(x.can, 6,4)/dbeta(x.cur,6,4)
+    # jumping distribution
+    a2_num <- dbeta(x.cur, c*pbeta(x.can,6,4), c*(1-pbeta(x.can,6,4)))
+    a2_den <- dbeta(x.can, c*pbeta(x.cur,6,4), c*(1-pbeta(x.cur,6,4)))
+    a2 <- a2_num / a2_den
+    # adjusted acceptance probability
+    accept.prob <- (a2 * (dbeta(x.can,6,4)/dbeta(x.cur,6,4)))
+    if (runif(1) <= accept.prob) x.cur=x.can
+    else x.cur
+    return(x.cur)
+  }
+  draws <- c()
+  x.cur <- runif(1)
+  for (i in 1:n.sims) {
+    draws[i] <- x.cur
+    x.cur <- x.update(x.cur,c)
+  }
+  par(mfrow=c(1,3))
+  plot(draws,main="Trace Plot for Simulation")
+  acf(draws,main="Autocorrelation Plot for Simulation")
+  hist(draws, main="Histogram for Simulation")
+  comp <- ks.test(draws[!duplicated(draws)], "pbeta",6,4)
+  print (comp)
+  return(comp)
+}
+mh.beta(1,10000) # reject.D = 0.06806, p-value = 9.333e-06
+hist(rbeta(10000,6,4))
+
+mh.beta(0.1,10000) # reject D = 0.10377, p-value = 0.005842
+mh.beta(2.5,10000) # reject.D = 0.13819, p-value < 2.2e-16
+```
+I cannot run this line. It says ylim cannot be unlimited.
+mh.beta(10,10000) # reject. D = 0.24389, p-value < 2.2e-16
